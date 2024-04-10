@@ -171,7 +171,7 @@ available_doclist() {
     log "Building available documentation list"
 
     cd build/devdocs-$DEVDOC_COMMIT/
-    thor docs:list > ../../$AVAILABLE_LIST
+    thor docs:list >../../$AVAILABLE_LIST
     result=$?
     cd - >/dev/null
     [[ $result -eq 0 ]] || err_exit "Could not get documentation list !"
@@ -189,4 +189,48 @@ main_install_online() {
     unpack_devdocs
     package_devdocs_bundle
     available_doclist
+}
+
+download_documentation_item() {
+    local file="${1/ /_}.tar.bz2" result_thor result_tar
+
+    [[ -f "$ARTEFACTS/docs/$file" ]] && return 0
+    log "Documentation '$1'"
+
+    cd build/devdocs-$DEVDOC_COMMIT/
+    rm -Rf public/
+    thor docs:download "$1" >/dev/null
+    result_thor=$?
+    mkdir -p ../../$ARTEFACTS/docs
+    tar jcf ../../$ARTEFACTS/docs/$file public/
+    result_tar=$?
+    cd - >/dev/null
+
+    [[ $result_thor -eq 0 ]] || err_exit "Error while downloading documentation for '$1'"
+    [[ $result_tar -eq 0 ]] || err_exit "Error while compressing documentation for '$1'"
+}
+
+download_documentation() {
+    # The C standard says that text files must end with a newline
+    # or the data after the last newline may not be read properly.
+    # ISO/IEC 9899:2011 7.21.2 Streams: Whether the last line requires
+    # a terminating new-line character is implementation-defined.
+    # So, do not forget the last newline !
+    while read -r line; do
+        [[ "$line" =~ ^\s*(#|$) ]] && continue
+        download_documentation_item "$line"
+    done <"$src_list"
+
+    [[ $? -eq 0 ]] || err_exit "Could not process $src_list"
+}
+
+main_documentation_online() {
+    setup_env
+
+    # defaults to the desired list
+    local src_list=$WANTED_LIST
+    # fallback to the provided full list
+    [ -f "$src_list" ] || src_list=$AVAILABLE_LIST
+
+    download_documentation "$src_list"
 }
