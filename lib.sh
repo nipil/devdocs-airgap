@@ -4,6 +4,11 @@ CONFIG_FILE=config.env
 AVAILABLE_LIST=available-docs.txt
 WANTED_LIST=wanted-docs.txt
 
+APT_PKG_COMMON="unzip bzip2 curl"
+APT_PKG_RUBY="build-essential libyaml-dev libssl-dev libffi-dev libzip-dev"
+APT_PKG_GEMS="libgmp-dev"
+APT_PACKAGES="$APT_PKG_COMMON $APT_PKG_RUBY $APT_PKG_GEMS"
+
 err_exit() {
     echo "$1" >&2
     exit 1
@@ -54,18 +59,20 @@ install_ruby_if_needed() {
 }
 
 apt_install() {
-    echo "$@"
+    echo "Installing $@"
     sudo apt-get -qq install -y "$@"
 }
 
-install_common_prerequisites() {
-    log "Install common prerequisites"
-    apt_install unzip bzip2 curl
-}
-
-install_ruby_build_prerequisites() {
-    log "Install ruby build APT prerequisites"
-    apt_install build-essential libyaml-dev libssl-dev libffi-dev libzip-dev
+install_apt_prerequisites() {
+    local missing=$(
+        comm -1 -3 \
+            <(dpkg --get-selections | grep '\binstall$' | awk '{ print $1 }' | sed 's/:[^:]*$//' | sort -u) \
+            <(printf '%s\n' $APT_PACKAGES | sort -u)
+    )
+    [[ -z "$missing" ]] && return 0
+    log "Install APT packages"
+    echo "Missing: $(echo $missing)"
+    apt_install $missing
 }
 
 download_artefact() {
@@ -95,7 +102,6 @@ check_ruby_download() {
 build_ruby() {
     local result
 
-    install_ruby_build_prerequisites
     download_ruby
 
     log "Building Ruby"
@@ -138,11 +144,6 @@ install_bundler() {
     gem install --silent $ARTEFACTS/bundler-$BUNDLER_VERSION.gem
 }
 
-install_gems_prerequisites() {
-    log "Install gems APT prerequisites"
-    apt_install libgmp-dev
-}
-
 download_devdocs() {
     [ -f $ARTEFACTS/devdocs-$DEVDOC_COMMIT.zip ] && return 0
     log "Downloading DevDocs"
@@ -180,7 +181,7 @@ available_doclist() {
     echo "If no $WANTED_LIST is present (or empty) all of $AVAILABLE_LIST will be fetched."
 
     # add missing trailing newline
-    echo "" >> $AVAILABLE_LIST
+    echo "" >>$AVAILABLE_LIST
 }
 
 download_devdocs_airgap() {
@@ -192,9 +193,7 @@ download_devdocs_airgap() {
 
 main_install_online() {
     setup_env
-    install_common_prerequisites
-    install_ruby_if_needed
-    install_bundler_if_needed
+    install_apt_prerequisites
     download_devdocs
     unpack_devdocs
     package_devdocs_bundle
@@ -205,8 +204,7 @@ main_install_online() {
 download_documentation_item() {
     local file="${1/ /_}.tar.bz2" result_thor result_tar
 
-    if [[ -f "$ARTEFACTS/docs/$file" ]]
-    then
+    if [[ -f "$ARTEFACTS/docs/$file" ]]; then
         log "Documentation '$1' --> Already cached"
         return 0
     else
