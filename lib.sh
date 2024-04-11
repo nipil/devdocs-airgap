@@ -197,8 +197,13 @@ main_install_online() {
 download_documentation_item() {
     local file="${1/ /_}.tar.bz2" result_thor result_tar
 
-    [[ -f "$ARTEFACTS/docs/$file" ]] && return 0
-    log "Documentation '$1'"
+    if [[ -f "$ARTEFACTS/docs/$file" ]]
+    then
+        log "Documentation '$1' --> Already cached"
+        return 0
+    else
+        log "Documentation '$1'"
+    fi
 
     cd build/devdocs-$DEVDOC_COMMIT/
     rm -Rf public/
