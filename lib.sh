@@ -183,6 +183,13 @@ available_doclist() {
     echo "" >> $AVAILABLE_LIST
 }
 
+download_devdocs_airgap() {
+    [ -f $ARTEFACTS/devdocs-airgap-main.zip ] && return 0
+    log "Downloading DevDocs-airgap"
+    download_artefact https://github.com/nipil/devdocs-airgap/archive/refs/heads/main.zip
+    mv $ARTEFACTS/main.zip $ARTEFACTS/devdocs-airgap-main.zip
+}
+
 main_install_online() {
     setup_env
     install_common_prerequisites
@@ -191,6 +198,7 @@ main_install_online() {
     download_devdocs
     unpack_devdocs
     package_devdocs_bundle
+    download_devdocs_airgap
     available_doclist
 }
 
