@@ -178,6 +178,9 @@ available_doclist() {
     echo "The file $AVAILABLE_LIST holds all currently available items."
     echo "Choose any, and put them in $WANTED_LIST, to get only what you wish."
     echo "If no $WANTED_LIST is present (or empty) all of $AVAILABLE_LIST will be fetched."
+
+    # add missing trailing newline
+    echo "" >> $AVAILABLE_LIST
 }
 
 main_install_online() {
