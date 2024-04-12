@@ -248,3 +248,73 @@ main_documentation_online() {
 
     download_documentation "$src_list"
 }
+
+main_install_offline() {
+    setup_env
+    install_common_prerequisites
+    install_ruby_if_needed
+    install_bundler_if_needed
+    unpack_devdocs
+    unpack_devdocs_bundle
+    install_devdocs_local
+    unpack_docs
+}
+
+unpack_devdocs_bundle() {
+    log "Unpacking vendored gems"
+    tar -x -v -f $ARTEFACTS/bundle-devdocs-$DEVDOC_COMMIT.tar.bz2 -C build/devdocs-$DEVDOC_COMMIT/
+    [[ $? -eq 0 ]] || err_exit "Error unpacking devdoc bundled gems, exiting."
+}
+
+install_devdocs_local() {
+    log "Installing local vendored gems"
+    cd build/devdocs-$DEVDOC_COMMIT/
+    bundler install --local
+    result=$?
+    cd - >/dev/null
+    [[ $? -eq 0 ]] || err_exit "Error installing local vendored gems, exiting."
+}
+
+set_aside_docs_json() {
+    local dir=build/devdocs-$DEVDOC_COMMIT/public/docs
+    [[ -f $dir/docs.json ]] || return 0
+    local hash=$(sha256sum $dir/docs.json | awk '{ print $1 }')
+    mv $dir/docs.json $dir/$hash-docs.json
+}
+
+merge_all_docs_json() {
+    log "Merging all docs metadata"
+    jq -s 'add' $1/*-docs.json >$1/docs.json
+    [[ $? -eq 0 ]] || err_exit "Error merging all docs metadata, exiting."
+    rm -f $1/*-docs.json
+}
+
+unpack_doc() {
+    log "Unpacking documentation for $1"
+    tar -C build/devdocs-$DEVDOC_COMMIT/ -x -f $1
+    [[ $? -eq 0 ]] || err_exit "Error unpacking documentation for $1, exiting."
+}
+
+unpack_docs() {
+    local target=build/devdocs-$DEVDOC_COMMIT/public/docs
+    local item
+    for item in $(find docs -type f); do
+        unpack_doc $item
+        set_aside_docs_json
+    done
+    merge_all_docs_json $target
+}
+
+start_app_server() {
+    log "Starting server"
+    cd build/devdocs-$DEVDOC_COMMIT/
+    rackup --host 0.0.0.0 --port 8080
+    result=$?
+    cd - >/dev/null
+    [[ $? -eq 0 ]] || err_exit "Error while running server."
+}
+
+main_start_app_server() {
+    setup_env
+    start_app_server
+}
