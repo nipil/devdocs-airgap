@@ -32,7 +32,7 @@ Then point your browser to http://localhost:8080
 
 Archive size is about 2.5 GB
 
-    docker run --rm -it -v.:/host -p 8080:8080/tcp devdocsairgap:latest ./dda.sh archive -h /host
+    docker run --rm -it -v.:/host -p 8080:8080/tcp devdocsairgap:latest ./dda.sh -h /host archive
 
 See section `Then, switch to air-gapped` and follow its instructions.
 

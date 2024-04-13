@@ -109,7 +109,7 @@ usage() {
     echo "- $0 src"
     echo "- sudo $0 apt"
     echo "- $0 setup"
-    echo "- $0 archive [-h .]"
+    echo "- $0 [-h .] archive"
     echo "- $0 [-l 0.0.0.0] [-p 8080] serve"
     exit 1
 }
