@@ -1,55 +1,95 @@
-# devdocs-mirror
+# devdocs-airgap
 
-Host a mirror of [DevDocs.io](https://devdocs.io/) on a fully disconnected machine.
+Host a mirror of [DevDocs.io](https://devdocs.io/) on a machine without any internet access.
 
 Thanks to [freeCodeCamp](https://github.com/freeCodeCamp) for the great tool they provide.
 
-This is useful in corporate environment where security rules prevent ANY internet access.
+This is useful in corporate environment where security rules prevent ANY outside access.
 
-# Build
+Building takes quite a long time, so be patient.
 
-Building takes ~25 minutes and the image is approximately ~20GB.
+# With Docker
 
-Built with Docker :
+Image size is about 18 GB
+
+## First, work online
+
+Build a self-contained image containing everything needed :
 
     docker build --pull --rm -f "Dockerfile" -t devdocsairgap:latest "."
 
-Built without Docker :
+## Move to an air-gapped Docker environment
 
-    # TODO
+Export your image, move it to your air-gapped Docker environment.
 
-# Build a self-containing archive for airgap-use
-
-Extracting an archive takes ~20 minutes and the archive is ~2.5GB.
-
-Extract with Docker :
-
-    time nice docker run --rm -it -v .:/host devdocsairgap:latest ./dda.sh archive
-
-Extract without Docker :
-
-    # TODO
-
-# Serve as Container
-
-To run the webserver and serve documentation :
+Finaly, run it :
 
     docker run --rm -it -p 8080:8080/tcp devdocsairgap:latest
 
-Then point your browser to [http://localhost:8080]
+Then point your browser to http://localhost:8080
 
-# Explore the container image 
+## Or export a non-Docker, standalone-archive
 
-To explore the container image :
+Archive size is about 2.5 GB
 
-    docker run --rm -it devdocsairgap:latest bash
+    docker run --rm -it -v.:/host -p 8080:8080/tcp devdocsairgap:latest ./dda.sh archive -h /host
 
-If you need priviledged access, add `--user root` before the image name.
+See section `Then, switch to air-gapped` and follow its instructions.
+
+## You can test the exported archive, using a secondary Docker image
+
+To verify that the prepared archive actually works :
+
+    docker build --pull --rm -f "Dockerfile.test-archive" -t devdocsairgap:latest "."
+    docker run --rm -it -p 8080:8080/tcp devdocsairgap:latest
+
+Then point your browser to http://localhost:8080
+
+# Without Docker
+
+This has been tested on Debian only.
+
+## First, work online
+
+First get everything needed :
+
+    sudo ./dda.sh apt
+    ./dda.sh src
+    ./dda.sh setup
+
+## Export a standalone-archive
+
+Then, build an self-contained `devdocs-airgap.tar.bz2` archive :
+
+    ./dda.sh archive
+
+**Only `devdocs-airgap.tar.bz2` remains useful from now on.**
+
+Everything else can be cleaned to reclaim space.
+
+## Then, switch to air-gapped
+
+Move this `devdocs-airgap.tar.bz2` archive to an air-gapped Debian host.
+
+Decompress the archive and move into it.
+
+Then, deploy everything in-situ :
+
+    sudo ./dda.sh apt
+    ./dda.sh setup
+
+Finaly, run it :
+
+    ./dda.sh serve
+
+Then point your browser to http://localhost:8080
+
+Finally, set up an autostart using your system launcher.
 
 # Docker image structure
 
     $HOME/devdocs-airgap/
-        ruby-install/
+        ruby-install/ (compiled)
         ruby-$DDA_RV.tar.gz
         ruby-$DDA_RV.tar.gz.sha256
         ruby-$RUBY_VERSION/ (temporary)
@@ -57,4 +97,4 @@ If you need priviledged access, add `--user root` before the image name.
         bundle-devdocs-$DDA_DDC.tar.bz2
         devdocs-$DDA_DDC.zip
         devdocs-$DEVDOC_COMMIT/
-            public/docs/
+            public/docs/ (fetched documentation)

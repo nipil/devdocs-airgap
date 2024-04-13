@@ -7,15 +7,11 @@ USER devdocs
 
 # seed
 WORKDIR /home/devdocs/devdocs-airgap
-COPY --chown=devdocs --chmod=755 dda.sh ./
+ADD --chown=devdocs devdocs-airgap.tar.bz2 ./
 
 # system packages
 USER root
 RUN ./dda.sh apt
-
-# get sources
-USER devdocs
-RUN ./dda.sh src
 
 # setup
 RUN ./dda.sh setup

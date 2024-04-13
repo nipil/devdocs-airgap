@@ -17,7 +17,7 @@ RUBY_VERSION_SHA256=96518814d9832bece92a85415a819d4893b307db5921ae1f0f751a9a89a5
 # default command parameters ################################################
 SERVE_LISTEN="0.0.0.0" # override 'serve' with -l
 SERVE_PORT=8080        # override 'serve' with -p
-HOST_DIR="/host"       # override 'archive' with -h
+HOST_DIR="."           # override 'archive' with -h
 
 # halt on any error #########################################################
 set -e
@@ -70,13 +70,20 @@ bundler_install_local_if_vendored() {
     bundler install --local
 }
 
+devdocs_download_docs_if_missing() {
+    [ ! -d public/docs ] || return 0
+    thor docs:download --all
+}
+
 setup_devdocs() {
+    local bundle=bundle-devdocs-$DEVDOC_COMMIT.tar.bz2
     gem install bundler-$BUNDLER_VERSION.gem
     unzip devdocs-$DEVDOC_COMMIT.zip
     cd devdocs-$DEVDOC_COMMIT
-    bundler_extract_deps_if_available ../bundle-devdocs-$DEVDOC_COMMIT.tar.bz2
-    bundler_package_if_missing ../bundle-devdocs-$DEVDOC_COMMIT.tar.bz2
+    bundler_extract_deps_if_available ../$bundle
+    bundler_package_if_missing ../$bundle
     bundler_install_local_if_vendored
+    devdocs_download_docs_if_missing
     cd ..
 }
 
@@ -87,14 +94,14 @@ devdoc_serve() {
 }
 
 make_archive() {
-    tar -j -c -f $HOST_DIR/devdocs-airgap.tar.bz2 \
+    tar -j -c -v -f $HOST_DIR/devdocs-airgap.tar.bz2 \
         dda.sh \
         ruby-$RUBY_VERSION.tar.gz \
         ruby-$RUBY_VERSION.tar.gz.sha256 \
         bundler-$BUNDLER_VERSION.gem \
         devdocs-$DEVDOC_COMMIT.zip \
         bundle-devdocs-$DEVDOC_COMMIT.tar.bz2 \
-        devdocs-$DEVDOC_COMMIT/public/docs/docs.json
+        devdocs-$DEVDOC_COMMIT/public/docs
 }
 
 usage() {
@@ -102,6 +109,7 @@ usage() {
     echo "- $0 src"
     echo "- sudo $0 apt"
     echo "- $0 setup"
+    echo "- $0 archive [-h .]"
     echo "- $0 [-l 0.0.0.0] [-p 8080] serve"
     exit 1
 }
