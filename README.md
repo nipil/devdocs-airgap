@@ -8,19 +8,33 @@ This is useful in corporate environment where security rules prevent ANY interne
 
 # Build
 
-The archive is compiled using a Docker image (~20GB required) :
+Building takes ~25 minutes and the image is approximately ~20GB.
 
-    docker build --pull --rm -f "Dockerfile" -t devdocsairgap:latest "." 
+Built with Docker :
 
-INFO: Building the image takes approximately 15 minutes.
+    docker build --pull --rm -f "Dockerfile" -t devdocsairgap:latest "."
+
+Built without Docker :
+
+    # TODO
+
+# Build a self-containing archive for airgap-use
+
+Extracting an archive takes ~20 minutes and the archive is ~2.5GB.
+
+Extract with Docker :
+
+    time nice docker run --rm -it -v .:/host devdocsairgap:latest ./dda.sh archive
+
+Extract without Docker :
+
+    # TODO
 
 # Serve as Container
 
 To run the webserver and serve documentation :
 
-    docker run --rm $MODE -p 8080:8080/tcp devdocsairgap:latest 
-
-Set `$MODE` to `-it` for interactive run, or to `-d`for daemonized run.
+    docker run --rm -it -p 8080:8080/tcp devdocsairgap:latest
 
 Then point your browser to [http://localhost:8080]
 
@@ -34,14 +48,13 @@ If you need priviledged access, add `--user root` before the image name.
 
 # Docker image structure
 
-    /home/devdoc/
+    $HOME/devdocs-airgap/
         ruby-install/
-        devdocs-airgap/
-            ruby-$DDA_RV.tar.gz
-            ruby-$DDA_RV.tar.gz.sha256
-            ruby-$RUBY_VERSION/ (temporary)
-            bundler-$BUNDLER_VERSION.gem
-            bundle-devdocs-$DDA_DDC.tar.bz2
-            devdocs-$DDA_DDC.zip
-            devdocs-$DEVDOC_COMMIT/
-                public/docs/
+        ruby-$DDA_RV.tar.gz
+        ruby-$DDA_RV.tar.gz.sha256
+        ruby-$RUBY_VERSION/ (temporary)
+        bundler-$BUNDLER_VERSION.gem
+        bundle-devdocs-$DDA_DDC.tar.bz2
+        devdocs-$DDA_DDC.zip
+        devdocs-$DEVDOC_COMMIT/
+            public/docs/

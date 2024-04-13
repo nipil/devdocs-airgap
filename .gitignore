@@ -1,0 +1,10 @@
+# local archives
+*.zip
+*.tar.gz
+*.tar.bz2
+*.gem
+*.sha256
+
+# working folders
+devdocs-*/
+ruby-*/
