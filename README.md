@@ -10,11 +10,11 @@ Building takes quite a long time, so be patient.
 
 # With Docker
 
-Image size is about 18 GB
+Image size is about 14-18 GB
 
 ## First, work online
 
-Build a self-contained image containing everything needed :
+Build a self-contained image containing everything needed (~15 mins) :
 
     docker build --pull --rm -f "Dockerfile" -t devdocsairgap:latest "."
 
@@ -30,7 +30,7 @@ Then point your browser to http://localhost:8080
 
 ## Or export a non-Docker, standalone-archive
 
-Archive size is about 2.5 GB
+Archive size is about 2.5 GB (~25 mins)
 
     docker run --rm -it -v.:/host -p 8080:8080/tcp devdocsairgap:latest ./dda.sh -h /host archive
 
@@ -38,9 +38,12 @@ See section `Then, switch to air-gapped` and follow its instructions.
 
 ## You can test the exported archive, using a secondary Docker image
 
-To verify that the prepared archive actually works :
+To verify that the prepared archive actually works (~20 mins) :
 
     docker build --pull --rm -f "Dockerfile.test-archive" -t devdocsairgap:latest "."
+
+Finaly, run it :
+
     docker run --rm -it -p 8080:8080/tcp devdocsairgap:latest
 
 Then point your browser to http://localhost:8080
