@@ -6,8 +6,27 @@ USER root
 RUN useradd -m devdocs
 
 # seed
+USER devdocs
+RUN mkdir /home/devdocs/devdocs-airgap
 WORKDIR /home/devdocs/devdocs-airgap
 ADD --chown=devdocs devdocs-airgap.tar.bz2 ./
+
+# Problem:
+# ADD sets chown permissions from the first item actually
+# present in the archive (here devdocs-*/public/docs), so and on,
+# but the parent folders up to that first item *SEEM* handled as
+# in WORKDIR, ie. they get root:root instead :
+#
+# devdocs devdocs /home/devdocs
+# devdocs devdocs /home/devdocs/devdocs-airgap
+# root    root    /home/devdocs/devdocs-airgap/devdocs-$DEVDOC_COMMIT
+# root    root    /home/devdocs/devdocs-airgap/devdocs-$DEVDOC_COMMIT/public
+# devdocs devdocs /home/devdocs/devdocs-airgap/devdocs-$DEVDOC_COMMIT/public/docs
+#
+# Fix:
+# chown intermediate misconfigured ADD folders.
+USER root
+RUN chown devdocs: devdocs-*/ devdocs-*/public/
 
 # system packages
 USER root
@@ -15,6 +34,7 @@ RUN ./dda.sh apt
 
 # setup
 USER devdocs
+COPY --chown=devdocs dda.sh ./
 RUN ./dda.sh setup
 
 # server-compatible locale

@@ -2,10 +2,12 @@
 FROM debian:bookworm
 
 # unpriviledged user
+USER root
 RUN useradd -m devdocs
-USER devdocs
 
 # seed
+USER devdocs
+RUN mkdir /home/devdocs/devdocs-airgap
 WORKDIR /home/devdocs/devdocs-airgap
 COPY --chown=devdocs --chmod=755 dda.sh ./
 
